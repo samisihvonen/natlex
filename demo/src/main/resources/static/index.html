@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sections and Geolocation Data</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 20px;
+            background-color: #f7f9fc;
+            color: #333;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        h2 {
+            margin-top: 30px;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: box-shadow 0.3s ease;
+        }
+        form:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        input[type="text"],
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 12px 6px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus,
+        input[type="file"]:focus,
+        textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            font-size: 16px;
+        }
+        th {
+            background-color: #f1f1f1;
+            font-weight: 500;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sections and Geolocation Data Management</h1>
+    
+    <h2>Upload Sections and Geolocation Data</h2>
+    <form id="uploadForm" action="/api/import" method="post" enctype="multipart/form-data">
+        <label for="file">Choose a file:</label>
+        <input type="file" id="file" name="file" accept=".xlsx,.xls" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    <h2>Export Sections and Geolocation Data</h2>
+    <form id="exportForm" action="/api/export" method="post">
+        <button type="submit">Export</button>
+    </form>
+
+    <h2>Check Job Status</h2>
+    <form id="checkStatusForm" action="/api/import/" method="get">
+        <label for="jobId">Enter Job ID:</label>
+        <input type="text" id="jobId" name="jobId" required>
+        <button type="submit">Check Import Status</button>
+    </form>
+    <form id="checkExportStatusForm" action="/api/export/" method="get">
+        <label for="exportJobId">Enter Export Job ID:</label>
+        <input type="text" id="exportJobId" name="exportJobId" required>
+        <button type="submit">Check Export Status</button>
+    </form>
+
+    <h2>Download Exported File</h2>
+    <form id="downloadForm" action="/api/export/" method="get">
+        <label for="downloadJobId">Enter Export Job ID:</label>
+        <input type="text" id="downloadJobId" name="downloadJobId" required>
+        <button type="submit">Download File</button>
+    </form>
+
+    <h2>Add Section</h2>
+    <form id="addSectionForm" action="/sections" method="post">
+        <label for="sectionName">Section Name:</label>
+        <input type="text" id="sectionName" name="sectionName" required>
+        <label for="geologicalCode">Geological Code:</label>
+        <input type="text" id="geologicalCode" name="geologicalCode" required>
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" required></textarea>
+        <button type="submit">Add Section</button>
+    </form>
+
+    <h2>Get Sections by Geological Code</h2>
+    <form id="getSectionsByCodeForm" action="/sections/by-code" method="get">
+        <label for="geologicalCodeQuery">Geological Code:</label>
+        <input type="text" id="geologicalCodeQuery" name="code" required>
+        <button type="submit">Get Sections</button>
+    </form>
+
+    <div id="sections"></div>
+
+    <script>
+        // Handle form submission for file upload
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('File uploaded successfully:', data);
+                alert('File uploaded successfully. Job ID: ' + data);
+            })
+            .catch(error => {
+                console.error('Error uploading file:', error);
+                alert('Error uploading file.');
+            });
+        });
+
+        // Handle form submission for export
+        document.getElementById('exportForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetch(this.action, {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Export initiated successfully:', data);
+                alert('Export initiated successfully. Job ID: ' + data);
+            })
+            .catch(error => {
+                console.error('Error initiating export:', error);
+                alert('Error initiating export.');
+            });
+        });
+
+        // Handle form submission for checking import status
+        document.getElementById('checkStatusForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const jobId = document.getElementById('jobId').value;
+            fetch('/api/import/' + jobId, {
+                method: 'GET',
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('Import status:', data);
+                alert('Import status: ' + data);
+            })
+            .catch(error => {
+                console.error('Error checking import status:', error);
+                alert('Error checking import status.');
+            });
+        });
+
+        // Handle form submission for checking export status
+        document.getElementById('checkExportStatusForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const jobId = document.getElementById('exportJobId').value;
+            fetch('/api/export/' + jobId, {
+                method: 'GET',
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('Export status:', data);
+                alert('Export status: ' + data);
+            })
+            .catch(error => {
+                console.error('Error checking export status:', error);
+                alert('Error checking export status.');
+            });
+        });
+
+        // Handle form submission for downloading exported file
+        document.getElementById('downloadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const jobId = document.getElementById('downloadJobId').value;
+            fetch('/api/export/' + jobId + '/file', {
+                method: 'GET',
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('File not ready or job not found');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'sections.xlsx'; // Adjust the filename if necessary
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error downloading file:', error);
+                alert('Error downloading file.');
+            });
+        });
+
+        // Handle form submission for adding a section
+        document.getElementById('addSectionForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const sectionData = {
+                name: formData.get('sectionName'),
+                geologicalCode: formData.get('geologicalCode'),
+                description: formData.get('description')
+            };
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(sectionData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Section added successfully:', data);
+                alert('Section added successfully.');
+            })
+            .catch(error => {
+                console.error('Error adding section:', error);
+                alert('Error adding section.');
+            });
+        });
+
+        // Handle form submission for getting sections by geological code
+        document.getElementById('getSectionsByCodeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const code = document.getElementById('geologicalCodeQuery').value;
+            fetch('/sections/by-code?code=' + encodeURIComponent(code), {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Sections retrieved successfully:', data);
+                const sections = document.getElementById('sections');
+        sections.innerHTML = '';
+        
+        // Create table
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.border = '1';
+        
+        // Create table header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        
+        const headers = ['Section Name', 'Geological Classes', 'Geological Codes'];
+        headers.forEach(headerText => {
+            const th = document.createElement('th');
+            th.textContent = headerText;
+            headerRow.appendChild(th);
+        });
+        
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        // Create table body
+        const tbody = document.createElement('tbody');
+        
+        data.forEach(section => {
+            const geologicalClasses = section.geologicalClasses.map(geo => geo.name).join(', ');
+            const geologicalCodes = section.geologicalClasses.map(geo => geo.code).join(', ');
+            
+            const row = document.createElement('tr');
+            
+            const nameCell = document.createElement('td');
+            nameCell.textContent = section.name;
+            row.appendChild(nameCell);
+            
+            const classesCell = document.createElement('td');
+            classesCell.textContent = geologicalClasses;
+            row.appendChild(classesCell);
+            
+            const codesCell = document.createElement('td');
+            codesCell.textContent = geologicalCodes;
+            row.appendChild(codesCell);
+            
+            tbody.appendChild(row);
+        });
+        
+        table.appendChild(tbody);
+        sections.appendChild(table);
+        
+        alert('Sections retrieved successfully. See console for details.');
+    })
+            .catch(error => {
+                console.error('Error retrieving sections:', error);
+                alert('Error retrieving sections.');
+            });
+        });
+    </script>
+</body>
+</html>
